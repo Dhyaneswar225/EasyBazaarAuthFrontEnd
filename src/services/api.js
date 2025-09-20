@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:8081', // Direct to Auth Service for now (later use Gateway)
+  baseURL: 'http://localhost:8080', // API Gateway
+  withCredentials:true,
 });
 
 export const register = (user) =>
@@ -17,3 +18,7 @@ export const login = (user) =>
     email: user.email,
     passwordHash: user.password, // Rename to password in a real app
   });
+
+export const getProducts = () => api.get('/api/products');
+export const searchProducts = (name) => api.get(`/api/products/search?name=${name}`);
+export const getCategories = () => api.get('/api/categories');
