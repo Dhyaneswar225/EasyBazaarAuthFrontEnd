@@ -26,3 +26,6 @@ export const getFeaturedProducts = () => api.get('/api/homepage/featured');
 export const addToCart = (userId, item) =>api.post(`/api/cart/add?userId=${userId}`, item);
 export const getCart = (userId) =>api.get(`/api/cart/${userId}`);
 export const removeFromCart = (userId, item) =>api.post(`/api/cart/remove?userId=${userId}`, item);
+export const placeOrder = (order) => api.post('/api/orders/place', order);
+export const getOrders = (userId) => api.get(`/api/orders/${userId}`);
+export const getOrderDetails = (orderId) => api.get(`/api/orders/track/${orderId}`);
