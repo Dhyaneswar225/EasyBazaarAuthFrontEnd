@@ -22,3 +22,4 @@ export const login = (user) =>
 export const getProducts = () => api.get('/api/products');
 export const searchProducts = (name) => api.get(`/api/products/search?name=${name}`);
 export const getCategories = () => api.get('/api/categories');
+export const getFeaturedProducts = () => api.get('/api/homepage/featured');

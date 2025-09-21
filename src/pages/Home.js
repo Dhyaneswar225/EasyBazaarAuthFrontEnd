@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getProducts, searchProducts, getCategories } from '../services/api';
+import { getProducts, searchProducts, getCategories, getFeaturedProducts } from '../services/api';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 function Home() {
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
+  const [featuredProducts, setFeaturedProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -13,6 +15,7 @@ function Home() {
   useEffect(() => {
     fetchCategories();
     fetchProducts();
+    fetchFeaturedProducts();
   }, []);
 
   const fetchCategories = async () => {
@@ -38,6 +41,15 @@ function Home() {
     }
   };
 
+  const fetchFeaturedProducts = async () => {
+    try {
+      const response = await getFeaturedProducts();
+      setFeaturedProducts(response.data);
+    } catch (err) {
+      setError('Failed to load featured products');
+    }
+  };
+
   const handleSearch = (e) => {
     e.preventDefault();
     fetchProducts(searchTerm, selectedCategory);
@@ -49,61 +61,99 @@ function Home() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token'); // clear token
-    navigate('/login'); // redirect to login page
+    localStorage.removeItem('token');
+    navigate('/login');
   };
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f3f3f3' }}>
-      {/* Header with Logout on top-right */}
-      <div className="d-flex align-items-center p-3 shadow-sm" style={{ backgroundColor: 'white' }}>
-        <h2 className="m-0">DazzleDepot</h2>
-        <button
-          className="btn btn-outline-secondary ms-auto"
-          onClick={handleLogout}
-        >
-          Logout
-        </button>
+      {/* Header */}
+      <div className="d-flex align-items-center p-3 shadow-sm" style={{ backgroundColor: 'white', position: 'sticky', top: 0, zIndex: 1000 }}>
+        <h2 className="m-0">EasyBazaar</h2>
+        <div className="ms-auto">
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Search products..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{ maxWidth: '300px', display: 'inline-block' }}
+          />
+          <button
+            className="btn btn-outline-secondary ms-2"
+            onClick={handleSearch}
+          >
+            Search
+          </button>
+          <button
+            className="btn btn-outline-secondary ms-2"
+            onClick={handleLogout}
+          >
+            Logout
+          </button>
+        </div>
       </div>
 
-      {/* Main content */}
-      <div className="container mt-5">
-        <h1>Welcome to DazzleDepot</h1>
-        <p>Your one-stop shop for everything!</p>
+      {/* Hero Banner */}
+      <div className="container mt-3">
+        <div style={{ height: '300px', backgroundColor: '#f0f0f0', borderRadius: '8px', overflow: 'hidden', position: 'relative' }}>
+          <img
+            src= "https://rukminim2.flixcart.com/fk-p-flap/960/160/image/3abc11594efaf6dd.jpg?q=60"
+            alt="EasyBazaar Sales"
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
+        </div>
+      </div>
 
-        {/* Search Bar and Category Filter */}
-        <form onSubmit={handleSearch} className="mb-4">
-          <div className="row">
-            <div className="col-md-6">
-              <input
-                type="text"
-                className="form-control"
-                placeholder="Search products..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <div className="col-md-4">
-              <select
-                className="form-control"
-                value={selectedCategory}
-                onChange={handleCategoryChange}
-              >
-                <option value="">All Categories</option>
-                {categories.map(category => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="col-md-2">
-              <button type="submit" className="btn btn-primary w-100">Search</button>
-            </div>
-          </div>
-        </form>
+      {/* Category Navigation */}
+      <div className="container mt-4">
+        <h4>Shop by Category</h4>
+        <div className="d-flex overflow-auto pb-2" style={{ gap: '15px' }}>
+          {categories.map(category => (
+            <button
+              key={category.id}
+              className={`btn btn-outline-primary ${selectedCategory === category.id ? 'active' : ''}`}
+              onClick={() => handleCategoryChange({ target: { value: category.id } })}
+              style={{ whiteSpace: 'nowrap' }}
+            >
+              {category.name}
+            </button>
+          ))}
+        </div>
+      </div>
 
-        {/* Product Grid */}
+      {/* Featured Products */}
+      <div className="container mt-4">
+        <h4>Featured Deals</h4>
+        <div className="d-flex overflow-auto pb-2" style={{ gap: '15px' }}>
+          {featuredProducts.length > 0 ? (
+            featuredProducts.map((product, index) => (
+              <div key={index} className="card" style={{ minWidth: '200px', flex: '0 0 auto' }}>
+                <div style={{ height: '150px', overflow: 'hidden' }}>
+                  <img
+                    src={product.imageUrl}
+                    className="card-img-top"
+                    alt={product.name}
+                    style={{ maxHeight: '150px', objectFit: 'contain', width: '100%' }}
+                  />
+                </div>
+                <div className="card-body">
+                  <h6 className="card-title">{product.name}</h6>
+                  <p className="card-text"><strong>${product.price?.toFixed(2) || 'N/A'}</strong></p>
+                  <button className="btn btn-outline-primary w-100">Add to Cart</button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p>No featured products available.</p>
+          )}
+        </div>
+      </div>
+
+      {/* Product Grid */}
+      <div className="container mt-4">
+        <h4>All Products</h4>
+        {error && <div className="alert alert-danger">{error}</div>}
         <div className="row">
           {products.length === 0 ? (
             <p>No products found.</p>
@@ -123,7 +173,7 @@ function Home() {
                     <h5 className="card-title">{product.name}</h5>
                     <p className="card-text">{product.description}</p>
                     <p className="card-text"><strong>${product.price.toFixed(2)}</strong></p>
-                    <button className="btn btn-outline-primary">Add to Cart</button>
+                    <button className="btn btn-outline-primary w-100">Add to Cart</button>
                   </div>
                 </div>
               </div>
