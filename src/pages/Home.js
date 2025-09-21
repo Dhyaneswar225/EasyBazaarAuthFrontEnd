@@ -11,6 +11,7 @@ function Home() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [error, setError] = useState('');
+  const userId = localStorage.getItem('token') || 'guest'; // Replace with proper auth logic
 
   useEffect(() => {
     fetchCategories();
@@ -65,6 +66,28 @@ function Home() {
     navigate('/login');
   };
 
+  const addToCart = async (product) => {
+    try {
+      const response = await fetch(`http://localhost:8080/api/cart/add?userId=${userId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: product.id,
+          quantity: 1,
+          price: product.price,
+        }),
+      });
+      if (response.ok) {
+        alert('Added to cart!');
+      } else {
+        throw new Error('Failed to add to cart');
+      }
+    } catch (err) {
+      setError('Failed to add to cart');
+      console.error(err);
+    }
+  };
+
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f3f3f3' }}>
       {/* Header */}
@@ -98,10 +121,14 @@ function Home() {
       <div className="container mt-3">
         <div style={{ height: '300px', backgroundColor: '#f0f0f0', borderRadius: '8px', overflow: 'hidden', position: 'relative' }}>
           <img
-            src= "https://rukminim2.flixcart.com/fk-p-flap/960/160/image/3abc11594efaf6dd.jpg?q=60"
+            src="https://via.placeholder.com/1200x300?text=Big+Sale+Today!"
             alt="EasyBazaar Sales"
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
+          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: 'white', textAlign: 'center' }}>
+            <h3>Big Sale Up to 50% Off!</h3>
+            <button className="btn btn-primary">Shop Now</button>
+          </div>
         </div>
       </div>
 
@@ -140,7 +167,7 @@ function Home() {
                 <div className="card-body">
                   <h6 className="card-title">{product.name}</h6>
                   <p className="card-text"><strong>${product.price?.toFixed(2) || 'N/A'}</strong></p>
-                  <button className="btn btn-outline-primary w-100">Add to Cart</button>
+                  <button className="btn btn-outline-primary w-100" onClick={() => addToCart(product)}>Add to Cart</button>
                 </div>
               </div>
             ))
@@ -173,7 +200,7 @@ function Home() {
                     <h5 className="card-title">{product.name}</h5>
                     <p className="card-text">{product.description}</p>
                     <p className="card-text"><strong>${product.price.toFixed(2)}</strong></p>
-                    <button className="btn btn-outline-primary w-100">Add to Cart</button>
+                    <button className="btn btn-outline-primary w-100" onClick={() => addToCart(product)}>Add to Cart</button>
                   </div>
                 </div>
               </div>

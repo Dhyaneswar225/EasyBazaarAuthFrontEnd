@@ -23,3 +23,6 @@ export const getProducts = () => api.get('/api/products');
 export const searchProducts = (name) => api.get(`/api/products/search?name=${name}`);
 export const getCategories = () => api.get('/api/categories');
 export const getFeaturedProducts = () => api.get('/api/homepage/featured');
+export const addToCart = (userId, item) =>api.post(`/api/cart/add?userId=${userId}`, item);
+export const getCart = (userId) =>api.get(`/api/cart/${userId}`);
+export const removeFromCart = (userId, item) =>api.post(`/api/cart/remove?userId=${userId}`, item);
