@@ -196,9 +196,11 @@ function Home() {
             <button className="btn btn-outline-primary me-2" onClick={handleSearch}>
               Search
             </button>
-            <button className="btn btn-success me-2" onClick={() => navigate('/order-tracking', { state: { orderId: latestOrderId } })} disabled={!latestOrderId}>
-             <i className="bi bi-geo-alt me-1"></i> Track Order
+            <button className="btn btn-success me-2 d-flex align-items-center" onClick={() => navigate('/order-tracking', { state: { orderId: latestOrderId } })} disabled={!latestOrderId} style={{ whiteSpace: 'nowrap' }}>
+             <i className="bi bi-geo-alt me-2"></i> 
+             Track Order
             </button>
+
             <button className="btn btn-outline-danger" onClick={handleLogout}>
               Logout
             </button>
