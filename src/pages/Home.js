@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { getProducts, searchProducts, getCategories, getFeaturedProducts, getCart, placeOrder } from '../services/api';
+import { getProducts, searchProducts, getCategories, getFeaturedProducts, getCart, placeOrder, getOrders } from '../services/api';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 function Home() {
@@ -13,7 +13,8 @@ function Home() {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [error, setError] = useState('');
   const [cart, setCart] = useState({ items: [] });
-  const userId = localStorage.getItem('token') || 'guest'; // Replace with proper auth logic
+  const [latestOrderId, setLatestOrderId] = useState(null);
+  const userId = "guest"; // Static userId
   const address = "123 Street"; // Mock address, replace with user input later
 
   useEffect(() => {
@@ -22,7 +23,7 @@ function Home() {
 
   const fetchInitialData = async () => {
     try {
-      await Promise.all([fetchCategories(), fetchProducts(), fetchFeaturedProducts(), fetchCart()]);
+      await Promise.all([fetchCategories(), fetchProducts(), fetchFeaturedProducts(), fetchCart(), fetchLatestOrder()]);
     } catch (err) {
       setError('Failed to load data');
     }
@@ -72,6 +73,20 @@ function Home() {
     }
   };
 
+  const fetchLatestOrder = async () => {
+    try {
+      const response = await getOrders(userId); // Assuming an endpoint to get user orders
+      if (response.data && response.data.length > 0) {
+        const latestOrder = response.data.reduce((latest, current) =>
+          new Date(latest.timestamp) > new Date(current.timestamp) ? latest : current
+        );
+        setLatestOrderId(latestOrder.id);
+      }
+    } catch (err) {
+      console.error('Failed to fetch orders:', err);
+    }
+  };
+
   const handleSearch = (e) => {
     e.preventDefault();
     fetchProducts(searchTerm, selectedCategory);
@@ -83,16 +98,16 @@ function Home() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    navigate('/login');
+    navigate('/login'); // Simplified logout
   };
 
   const addToCart = async (product) => {
     try {
-      const response = await fetch(`http://localhost:8080/api/cart/add?userId=${userId}`, {
+      const response = await fetch(`http://localhost:8080/api/cart/add`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          userId,
           productId: product.id,
           quantity: 1,
           price: product.price,
@@ -110,6 +125,25 @@ function Home() {
     }
   };
 
+  const removeFromCart = async (productId) => {
+    try {
+      const response = await fetch(`http://localhost:8080/api/cart/remove`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, items: [{ productId, quantity: 1, price: 0 }] }),
+      });
+      if (response.ok) {
+        fetchCart();
+        alert('Item removed from cart!');
+      } else {
+        throw new Error(`Failed to remove item from cart: ${response.statusText}`);
+      }
+    } catch (err) {
+      setError('Failed to remove item from cart');
+      console.error(err);
+    }
+  };
+
   const placeOrderHandler = async () => {
     if (cart.items.length === 0) {
       setError('Cart is empty');
@@ -123,12 +157,12 @@ function Home() {
     };
     try {
       const response = await placeOrder(order);
-      await fetch(`http://localhost:8080/api/cart/remove?userId=${userId}`, {
+      await fetch(`http://localhost:8080/api/cart/remove`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items: cart.items }), // Clear cart
-      }).catch(err => console.error('Cart clear failed:', err)); // Log any errors
-      await fetchCart(); // Ensure cart is refreshed
+        body: JSON.stringify({ userId, items: cart.items }),
+      }).catch(err => console.error('Cart clear failed:', err));
+      await fetchCart();
       navigate('/order-tracking', { state: { orderId: response.data.id } });
     } catch (err) {
       setError('Failed to place order');
@@ -136,59 +170,67 @@ function Home() {
     }
   };
 
+  // Helper function to get product name by productId
+  const getProductName = (productId) => {
+    const product = [...products, ...featuredProducts].find(p => p.id === productId);
+    return product ? product.name : 'Unknown';
+  };
+
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f3f3f3' }}>
+    <div style={{ minHeight: '100vh', backgroundColor: '#f8f9fa' }}>
       {/* Header */}
-      <div className="d-flex align-items-center p-3 shadow-sm" style={{ backgroundColor: 'white', position: 'sticky', top: 0, zIndex: 1000 }}>
-        <h2 className="m-0">EasyBazaar</h2>
-        <div className="ms-auto">
-          <input
-            type="text"
-            className="form-control"
-            placeholder="Search products..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ maxWidth: '300px', display: 'inline-block' }}
-          />
-          <button
-            className="btn btn-outline-secondary ms-2"
-            onClick={handleSearch}
-          >
-            Search
-          </button>
-          <button
-            className="btn btn-outline-secondary ms-2"
-            onClick={handleLogout}
-          >
-            Logout
-          </button>
+      <header className="bg-white shadow-sm py-3 sticky-top">
+        <div className="container d-flex align-items-center justify-content-between">
+          <div className="d-flex align-items-center">
+            <h2 className="m-0 text-primary">EasyBazaar</h2>
+          </div>
+          <div className="d-flex align-items-center">
+            <input
+              type="text"
+              className="form-control me-2"
+              placeholder="Search products..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{ maxWidth: '300px' }}
+            />
+            <button className="btn btn-outline-primary me-2" onClick={handleSearch}>
+              Search
+            </button>
+            <button className="btn btn-success me-2" onClick={() => navigate('/order-tracking', { state: { orderId: latestOrderId } })} disabled={!latestOrderId}>
+             <i className="bi bi-geo-alt me-1"></i> Track Order
+            </button>
+            <button className="btn btn-outline-danger" onClick={handleLogout}>
+              Logout
+            </button>
+          </div>
         </div>
-      </div>
+      </header>
 
       {/* Hero Banner */}
-      <div className="container mt-3">
-        <div style={{ height: '300px', backgroundColor: '#f0f0f0', borderRadius: '8px', overflow: 'hidden', position: 'relative' }}>
+      <div className="container mt-4">
+        <div className="position-relative overflow-hidden bg-light rounded-3" style={{ height: '350px' }}>
           <img
-            src="https://picsum.photos/1200/300"
+            src="https://picsum.photos/1200/350"
             alt="Hero Banner"
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            onError={(e) => { e.target.src = 'https://via.placeholder.com/1200x300'; }}
+            className="w-100 h-100 object-fit-cover"
+            onError={(e) => { e.target.src = 'https://via.placeholder.com/1200x350'; }}
           />
-          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: 'white', textAlign: 'center' }}>
-            <h3>Big Sale Up to 50% Off!</h3>
-            <button className="btn btn-primary">Shop Now</button>
+          <div className="position-absolute top-50 start-50 translate-middle text-center text-white">
+            <h1 className="display-4 fw-bold">Big Sale Up to 50% Off!</h1>
+            <p className="lead">Shop now for the best deals.</p>
+            <button className="btn btn-warning btn-lg mt-3">Shop Now</button>
           </div>
         </div>
       </div>
 
       {/* Category Navigation */}
-      <div className="container mt-4">
-        <h4>Shop by Category</h4>
-        <div className="d-flex overflow-auto pb-2" style={{ gap: '15px' }}>
+      <div className="container mt-5">
+        <h4 className="mb-3">Shop by Category</h4>
+        <div className="d-flex flex-wrap gap-2">
           {categories.map(category => (
             <button
               key={category.id}
-              className={`btn btn-outline-primary ${selectedCategory === category.id ? 'active' : ''}`}
+              className={`btn btn-outline-primary ${selectedCategory === category.id ? 'active' : ''} mb-2`}
               onClick={() => handleCategoryChange({ target: { value: category.id } })}
               style={{ whiteSpace: 'nowrap' }}
             >
@@ -199,82 +241,116 @@ function Home() {
       </div>
 
       {/* Featured Products */}
-      <div className="container mt-4">
-        <h4>Featured Deals</h4>
-        <div className="d-flex overflow-auto pb-2" style={{ gap: '15px' }}>
+      <div className="container mt-5">
+        <h4 className="mb-3">Featured Deals</h4>
+        <div className="row row-cols-1 row-cols-md-3 g-4">
           {featuredProducts.length > 0 ? (
             featuredProducts.map((product, index) => (
-              <div key={index} className="card" style={{ minWidth: '200px', flex: '0 0 auto' }}>
-                <div style={{ height: '150px', overflow: 'hidden' }}>
-                  <img
-                    src={product.imageUrl}
-                    className="card-img-top"
-                    alt={product.name}
-                    style={{ maxHeight: '150px', objectFit: 'contain', width: '100%' }}
-                  />
-                </div>
-                <div className="card-body">
-                  <h6 className="card-title">{product.name}</h6>
-                  <p className="card-text"><strong>${product.price?.toFixed(2) || 'N/A'}</strong></p>
-                  <button className="btn btn-outline-primary w-100" onClick={() => addToCart(product)}>Add to Cart</button>
+              <div key={index} className="col">
+                <div className="card h-100 border-0 shadow-sm">
+                  <div className="card-img-top overflow-hidden" style={{ height: '200px' }}>
+                    <img
+                      src={product.imageUrl}
+                      alt={product.name}
+                      className="w-100 h-100 object-fit-contain p-2"
+                    />
+                  </div>
+                  <div className="card-body text-center">
+                    <h6 className="card-title">{product.name}</h6>
+                    <p className="card-text text-success fw-bold">${product.price?.toFixed(2) || 'N/A'}</p>
+                    <button className="btn btn-outline-primary w-100" onClick={() => addToCart(product)}>
+                      Add to Cart
+                    </button>
+                  </div>
                 </div>
               </div>
             ))
           ) : (
-            <p>No featured products available.</p>
+            <p className="text-center">No featured products available.</p>
+          )}
+        </div>
+      </div>
+
+      {/* Product Grid */}
+      <div className="container mt-5 mb-5">
+        <h4 className="mb-3">All Products</h4>
+        <div className="row row-cols-1 row-cols-md-3 g-4">
+          {products.length === 0 ? (
+            <p className="text-center">No products found.</p>
+          ) : (
+            products.map(product => (
+              <div key={product.id} className="col">
+                <div className="card h-100 border-0 shadow-sm">
+                  <div className="card-img-top overflow-hidden" style={{ height: '250px' }}>
+                    <img
+                      src={product.imageUrl}
+                      alt={product.name}
+                      className="w-100 h-100 object-fit-contain p-2"
+                    />
+                  </div>
+                  <div className="card-body text-center">
+                    <h5 className="card-title">{product.name}</h5>
+                    <p className="card-text">{product.description.substring(0, 50)}...</p>
+                    <p className="card-text text-success fw-bold">${product.price.toFixed(2)}</p>
+                    <button className="btn btn-outline-primary w-100" onClick={() => addToCart(product)}>
+                      Add to Cart
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
           )}
         </div>
       </div>
 
       {/* Cart Summary and Checkout */}
-      <div className="container mt-4">
-        <h4>Cart ({cart.items.length} items)</h4>
+      <div className="container mt-5 mb-5">
+        <h4 className="mb-3">Cart ({cart.items.length} items)</h4>
         {cart.items.length > 0 ? (
           <div>
-            {cart.items.map((item, index) => (
-              <div key={index} className="card mb-2">
-                <div className="card-body">
-                  <p>Product ID: {item.productId}, Qty: {item.quantity}, Price: ${item.price.toFixed(2)}</p>
-                </div>
-              </div>
-            ))}
-            <button className="btn btn-success w-100" onClick={placeOrderHandler}>Checkout</button>
+            <div className="table-responsive">
+              <table className="table table-striped">
+                <thead>
+                  <tr>
+                    <th>Product Name</th>
+                    <th>Product ID</th>
+                    <th>Quantity</th>
+                    <th>Price</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {cart.items.map((item, index) => (
+                    <tr key={index}>
+                      <td>{getProductName(item.productId)}</td>
+                      <td>{item.productId}</td>
+                      <td>{item.quantity}</td>
+                      <td>${item.price.toFixed(2)}</td>
+                      <td>
+                        <button
+                          className="btn btn-danger btn-sm"
+                          onClick={() => removeFromCart(item.productId)}
+                        >
+                          🗑️
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  <tr>
+                    <td colSpan="4"><strong>Total</strong></td>
+                    <td><strong>${cart.items.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2)}</strong></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <button className="btn btn-success w-100 mt-3" onClick={placeOrderHandler}>
+              Checkout
+            </button>
           </div>
         ) : (
-          <p>Cart is empty.</p>
+          <p className="text-center text-muted">Cart is empty.</p>
         )}
-        {error && <div className="alert alert-danger">{error}</div>}
-      </div>
-
-      {/* Product Grid */}
-      <div className="container mt-4">
-        <h4>All Products</h4>
-        <div className="row">
-          {products.length === 0 ? (
-            <p>No products found.</p>
-          ) : (
-            products.map(product => (
-              <div key={product.id} className="col-md-4 mb-4">
-                <div className="card h-100">
-                  <div style={{ height: '200px', overflow: 'hidden' }}>
-                    <img
-                      src={product.imageUrl}
-                      className="card-img-top"
-                      alt={product.name}
-                      style={{ maxHeight: '200px', objectFit: 'contain', width: '100%' }}
-                    />
-                  </div>
-                  <div className="card-body">
-                    <h5 className="card-title">{product.name}</h5>
-                    <p className="card-text">{product.description}</p>
-                    <p className="card-text"><strong>${product.price.toFixed(2)}</strong></p>
-                    <button className="btn btn-outline-primary w-100" onClick={() => addToCart(product)}>Add to Cart</button>
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
+        {error && <div className="alert alert-danger mt-3">{error}</div>}
       </div>
     </div>
   );
