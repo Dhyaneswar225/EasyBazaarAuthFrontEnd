@@ -182,7 +182,13 @@ function Home() {
       <header className="bg-white shadow-sm py-3 sticky-top">
         <div className="container d-flex align-items-center justify-content-between">
           <div className="d-flex align-items-center">
-            <h2 className="m-0 text-primary">EasyBazaar</h2>
+            <button
+              className="btn p-0 m-0 text-primary"
+              onClick={() => navigate('/home')}
+              style={{ background: 'none', border: 'none', fontSize: '1.5rem', fontWeight: 'bold', cursor: 'pointer' }}
+            >
+              EasyBazaar
+            </button>
           </div>
           <div className="d-flex align-items-center">
             <input
@@ -197,10 +203,9 @@ function Home() {
               Search
             </button>
             <button className="btn btn-success me-2 d-flex align-items-center" onClick={() => navigate('/order-tracking', { state: { orderId: latestOrderId } })} disabled={!latestOrderId} style={{ whiteSpace: 'nowrap' }}>
-             <i className="bi bi-geo-alt me-2"></i> 
-             Track Order
+              <i className="bi bi-geo-alt me-2"></i> 
+              Track Order
             </button>
-
             <button className="btn btn-outline-danger" onClick={handleLogout}>
               Logout
             </button>

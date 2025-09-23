@@ -3,6 +3,8 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Home from './pages/Home';
 import OrderTracking from './pages/OrderTracking'; 
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 function App() {
   return (
     <BrowserRouter>
@@ -13,6 +15,8 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/home" element={<Home />} />
         <Route path="/order-tracking" element={<OrderTracking />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
       </Routes>
     </BrowserRouter>
   );

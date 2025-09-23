@@ -33,7 +33,7 @@ function OrderTracking() {
       if (updatedOrder.trackingUpdates.length === 1) {
         const now = new Date();
         updatedOrder.trackingUpdates.push({
-          status: "Shipped",
+          status: "Shiped",
           timestamp: now,
           location: "Warehouse"
         });
@@ -59,11 +59,11 @@ function OrderTracking() {
 
   // Determine progress step based on status
   const getProgressStep = (status) => {
-    const steps = ['Order Placed', 'Shipped', 'Out for Delivery', 'Delivered'];
+    const steps = ['Order Placed', 'Shiped', 'Out for Delivery', 'Delivered'];
     return steps.indexOf(status) !== -1 ? steps.indexOf(status) : 0;
   };
 
-  const steps = ['Order Placed', 'Shipped', 'Out for Delivery', 'Delivered'];
+  const steps = ['Order Placed', 'Shiped', 'Out for Delivery', 'Delivered'];
   const currentStep = getProgressStep(order.status);
 
   // Format date with fallback
@@ -77,56 +77,76 @@ function OrderTracking() {
   };
 
   return (
-    <div className="container mt-5">
-      <div className="card shadow-sm p-4">
-        <h2 className="text-primary mb-4">Order Tracking</h2>
-        <div className="card-body">
-          <div className="row">
-            <div className="col-12 mb-4">
-              <div className="order-details">
-                <h5 className="text-muted">Order Details</h5>
-                <p><strong>Order ID:</strong> {order.id}</p>
-                <p><strong>Status:</strong> <span className="badge bg-success">{order.status}</span></p>
-                <p><strong>Total:</strong> ${order.total.toFixed(2)}</p>
-                <p><strong>Address:</strong> {order.address}</p>
+    <div>
+      {/* Header */}
+      <header className="bg-white shadow-sm py-3 sticky-top">
+        <div className="container d-flex align-items-center justify-content-between">
+          <div className="d-flex align-items-center">
+            <button
+              className="btn p-0 m-0 text-primary"
+              onClick={() => navigate('/home')}
+              style={{ background: 'none', border: 'none', fontSize: '1.5rem', fontWeight: 'bold', cursor: 'pointer' }}
+            >
+              EasyBazaar
+            </button>
+          </div>
+          <div className="d-flex align-items-center">
+            <button className="btn btn-secondary" onClick={handleBack}>Back to Home</button>
+          </div>
+        </div>
+      </header>
+
+      {/* Order Tracking Content */}
+      <div className="container mt-5">
+        <div className="card shadow-sm p-4">
+          <h2 className="text-primary mb-4">Order Tracking</h2>
+          <div className="card-body">
+            <div className="row">
+              <div className="col-12 mb-4">
+                <div className="order-details">
+                  <h5 className="text-muted">Order Details</h5>
+                  <p><strong>Order ID:</strong> {order.id}</p>
+                  <p><strong>Status:</strong> <span className="badge bg-success">{order.status}</span></p>
+                  <p><strong>Total:</strong> ${order.total.toFixed(2)}</p>
+                  <p><strong>Address:</strong> {order.address}</p>
+                </div>
               </div>
-            </div>
-            <div className="col-12">
-              <h5 className="text-muted">Tracking Progress</h5>
-              <div className="progress-tracker">
-                {steps.map((step, index) => (
-                  <div key={index} className="progress-step">
-                    <div
-                      className={`step-circle ${index <= currentStep ? 'active' : ''}`}
-                    >
-                      {index <= currentStep ? <i className="bi bi-check-lg"></i> : index + 1}
+              <div className="col-12">
+                <h5 className="text-muted">Tracking Progress</h5>
+                <div className="progress-tracker">
+                  {steps.map((step, index) => (
+                    <div key={index} className="progress-step">
+                      <div
+                        className={`step-circle ${index <= currentStep ? 'active' : ''}`}
+                      >
+                        {index <= currentStep ? <i className="bi bi-check-lg"></i> : index + 1}
+                      </div>
+                      <div className={`step-label ${index <= currentStep ? 'active' : ''}`}>
+                        {step}
+                      </div>
+                      {index < steps.length - 1 && (
+                        <div className={`step-line ${index < currentStep ? 'active' : ''}`}></div>
+                      )}
                     </div>
-                    <div className={`step-label ${index <= currentStep ? 'active' : ''}`}>
-                      {step}
-                    </div>
-                    {index < steps.length - 1 && (
-                      <div className={`step-line ${index < currentStep ? 'active' : ''}`}></div>
-                    )}
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-            <div className="col-12 mt-4">
-              <h5 className="text-muted">Tracking History</h5>
-              <div className="timeline">
-                {order.trackingUpdates.map((update, index) => (
-                  <div key={index} className="timeline-item">
-                    <div className="timeline-dot"></div>
-                    <div className="timeline-content">
-                      <p><strong>{update.status}</strong> - {formatDate(update.timestamp)}</p>
-                      <p className="text-muted">{update.location}</p>
+              <div className="col-12 mt-4">
+                <h5 className="text-muted">Tracking History</h5>
+                <div className="timeline">
+                  {order.trackingUpdates.map((update, index) => (
+                    <div key={index} className="timeline-item">
+                      <div className="timeline-dot"></div>
+                      <div className="timeline-content">
+                        <p><strong>{update.status}</strong> - {formatDate(update.timestamp)}</p>
+                        <p className="text-muted">{update.location}</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
           </div>
-          <button className="btn btn-secondary mt-4" onClick={handleBack}>Back to Home</button>
         </div>
       </div>
       <style>{`

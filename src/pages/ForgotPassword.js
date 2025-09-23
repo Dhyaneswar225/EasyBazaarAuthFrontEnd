@@ -1,25 +1,29 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { login } from '../services/api';
 
-function Login() {
-  const [formData, setFormData] = useState({ email: '', password: '' });
+function ForgotPassword() {
+  const [email, setEmail] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const navigate = useNavigate();
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await login(formData);
-      localStorage.setItem('token', response.data);
-      alert('Login successful!');
-      navigate('/home');
+      const response = await fetch(`http://localhost:8080/api/auth/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      if (response.ok) {
+        setSuccess('Reset link sent to your email!');
+        setTimeout(() => navigate('/login'), 3000);
+      } else {
+        setError('User not found');
+      }
     } catch (err) {
-      setError(err.response?.data || 'Login failed');
+      setError('Failed to send reset link');
+      console.error(err);
     }
   };
 
@@ -28,42 +32,27 @@ function Login() {
       <div className="card p-4 shadow-sm" style={{ width: '100%', maxWidth: '400px', borderRadius: '10px' }}>
         <div className="text-center mb-4">
           <h2 style={{ fontWeight: '700', color: '#ff9900' }}>EasyBazaar</h2>
-          <p className="text-muted">Login to your account</p>
+          <p className="text-muted">Reset your password</p>
         </div>
         {error && <div className="alert alert-danger">{error}</div>}
+        {success && <div className="alert alert-success">{success}</div>}
         <form onSubmit={handleSubmit}>
           <div className="mb-3">
             <input
               type="email"
-              name="email"
               className="form-control form-control-lg"
               placeholder="Email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div className="mb-3">
-            <input
-              type="password"
-              name="password"
-              className="form-control form-control-lg"
-              placeholder="Password"
-              value={formData.password}
-              onChange={handleChange}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
           <button type="submit" className="btn btn-warning w-100 fw-bold">
-            Login
+            Send Reset Link
           </button>
           <div className="text-center mt-3">
             <small>
-              Don't have an account? <a href="/register">Register here</a>
-            </small>
-            <br />
-            <small>
-              <a href="/forgot-password">Forgot Password?</a>
+              <a href="/login">Back to Login</a>
             </small>
           </div>
         </form>
@@ -72,4 +61,4 @@ function Login() {
   );
 }
 
-export default Login;
+export default ForgotPassword;
