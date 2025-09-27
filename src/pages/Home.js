@@ -377,7 +377,6 @@ function Home() {
                 <thead>
                   <tr>
                     <th>Product Name</th>
-                    <th>Product ID</th>
                     <th>Quantity</th>
                     <th>Price</th>
                     <th>Action</th>
@@ -387,7 +386,6 @@ function Home() {
                   {cart.items.map((item, index) => (
                     <tr key={index}>
                       <td>{getProductName(item.productId)}</td>
-                      <td>{item.productId}</td>
                       <td>{item.quantity}</td>
                       <td>${item.price.toFixed(2)}</td>
                       <td>
