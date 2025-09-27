@@ -8,9 +8,10 @@ const api = axios.create({
 export const register = (user) =>
   api.post('/api/auth/register', {
     email: user.email,
-    passwordHash: user.password, // Rename to password in a real app
+    passwordHash: user.password, // Rename to password in a real app (consider hashing client-side or server-side)
     name: user.name,
-    address: user.address,
+    countryCode: user.countryCode,
+    mobileNumber: user.mobileNumber,
   });
 
 export const login = (user) =>

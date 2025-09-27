@@ -14,6 +14,8 @@ function Home() {
   const [error, setError] = useState('');
   const [cart, setCart] = useState({ items: [] });
   const [latestOrderId, setLatestOrderId] = useState(null);
+  const [currentLocation, setCurrentLocation] = useState('Mumbai 400001'); // Default
+  const [loadingLocation, setLoadingLocation] = useState(false);
   const userId = "guest"; // Static userId
   const address = "123 Street"; // Mock address, replace with user input later
 
@@ -176,6 +178,53 @@ function Home() {
     return product ? product.name : 'Unknown';
   };
 
+  // Fetch current location using Geolocation API with OpenStreetMap Nominatim
+  const fetchCurrentLocation = () => {
+    setLoadingLocation(true);
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+          try {
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+            );
+            const data = await response.json();
+            if (data && data.address) {
+              const address = data.address;
+              const locationStr = `${address.city || address.town || address.village || 'Unknown'} ${address.postcode || ''}`.trim();
+              setCurrentLocation(locationStr);
+              localStorage.setItem('currentLocation', locationStr);
+            } else {
+              setError('Could not determine location');
+            }
+          } catch (err) {
+            console.error('Error fetching address:', err);
+            setError('Failed to fetch location');
+          }
+          setLoadingLocation(false);
+        },
+        (error) => {
+          console.error('Geolocation error:', error);
+          setError('Location access denied');
+          setLoadingLocation(false);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+      );
+    } else {
+      setError('Geolocation not supported');
+      setLoadingLocation(false);
+    }
+  };
+
+  // Load saved location on mount
+  useEffect(() => {
+    const savedLocation = localStorage.getItem('currentLocation');
+    if (savedLocation) {
+      setCurrentLocation(savedLocation);
+    }
+  }, []);
+
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f8f9fa' }}>
       {/* Header */}
@@ -183,12 +232,20 @@ function Home() {
         <div className="container d-flex align-items-center justify-content-between">
           <div className="d-flex align-items-center">
             <button
-              className="btn p-0 m-0 text-primary"
+              className="btn p-0 m-0 text-primary me-2"
               onClick={() => navigate('/home')}
               style={{ background: 'none', border: 'none', fontSize: '1.5rem', fontWeight: 'bold', cursor: 'pointer' }}
             >
               EasyBazaar
             </button>
+            <span
+              className="badge bg-light text-dark d-flex align-items-center"
+              style={{ cursor: loadingLocation ? 'not-allowed' : 'pointer' }}
+              onClick={loadingLocation ? null : fetchCurrentLocation}
+            >
+              <i className="bi bi-geo-alt me-1"></i>
+              {loadingLocation ? 'Updating...' : currentLocation}
+            </span>
           </div>
           <div className="d-flex align-items-center">
             <input
