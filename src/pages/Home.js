@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { getProducts, searchProducts, getCategories, getFeaturedProducts, getCart, placeOrder, getOrders } from '../services/api';
+import { getProducts, searchProducts, getCategories, getFeaturedProducts, getCart, getOrders } from '../services/api';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 function Home() {
@@ -17,11 +17,10 @@ function Home() {
   const [currentLocation, setCurrentLocation] = useState('Mumbai 400001'); // Default
   const [loadingLocation, setLoadingLocation] = useState(false);
   const userId = "guest"; // Static userId
-  const address = "123 Street"; // Mock address, replace with user input later
 
   useEffect(() => {
     fetchInitialData();
-  }, [location]); // Re-fetch data when location changes
+  }, [location]);
 
   const fetchInitialData = async () => {
     try {
@@ -68,7 +67,7 @@ function Home() {
       const response = await getCart(userId);
       const updatedCart = response.data || { items: [] };
       setCart(updatedCart);
-      console.log('Cart updated:', updatedCart.items); // Debug log
+      console.log('Cart updated:', updatedCart.items);
     } catch (err) {
       setError('Failed to load cart');
       setCart({ items: [] });
@@ -77,7 +76,7 @@ function Home() {
 
   const fetchLatestOrder = async () => {
     try {
-      const response = await getOrders(userId); // Assuming an endpoint to get user orders
+      const response = await getOrders(userId);
       if (response.data && response.data.length > 0) {
         const latestOrder = response.data.reduce((latest, current) =>
           new Date(latest.timestamp) > new Date(current.timestamp) ? latest : current
@@ -100,7 +99,7 @@ function Home() {
   };
 
   const handleLogout = () => {
-    navigate('/login'); // Simplified logout
+    navigate('/login');
   };
 
   const addToCart = async (product) => {
@@ -127,58 +126,11 @@ function Home() {
     }
   };
 
-  const removeFromCart = async (productId) => {
-    try {
-      const response = await fetch(`http://localhost:8080/api/cart/remove`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, items: [{ productId, quantity: 1, price: 0 }] }),
-      });
-      if (response.ok) {
-        fetchCart();
-        alert('Item removed from cart!');
-      } else {
-        throw new Error(`Failed to remove item from cart: ${response.statusText}`);
-      }
-    } catch (err) {
-      setError('Failed to remove item from cart');
-      console.error(err);
-    }
-  };
-
-  const placeOrderHandler = async () => {
-    if (cart.items.length === 0) {
-      setError('Cart is empty');
-      return;
-    }
-    const order = {
-      userId,
-      items: cart.items,
-      total: cart.items.reduce((sum, item) => sum + item.price * item.quantity, 0),
-      address,
-    };
-    try {
-      const response = await placeOrder(order);
-      await fetch(`http://localhost:8080/api/cart/remove`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, items: cart.items }),
-      }).catch(err => console.error('Cart clear failed:', err));
-      await fetchCart();
-      navigate('/order-tracking', { state: { orderId: response.data.id } });
-    } catch (err) {
-      setError('Failed to place order');
-      console.error(err);
-    }
-  };
-
-  // Helper function to get product name by productId
   const getProductName = (productId) => {
     const product = [...products, ...featuredProducts].find(p => p.id === productId);
     return product ? product.name : 'Unknown';
   };
 
-  // Fetch current location using Geolocation API with OpenStreetMap Nominatim
   const fetchCurrentLocation = () => {
     setLoadingLocation(true);
     if (navigator.geolocation) {
@@ -217,7 +169,6 @@ function Home() {
     }
   };
 
-  // Load saved location on mount
   useEffect(() => {
     const savedLocation = localStorage.getItem('currentLocation');
     if (savedLocation) {
@@ -228,47 +179,54 @@ function Home() {
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f8f9fa' }}>
       {/* Header */}
-      <header className="bg-white shadow-sm py-3 sticky-top">
-        <div className="container d-flex align-items-center justify-content-between">
-          <div className="d-flex align-items-center">
-            <button
-              className="btn p-0 m-0 text-primary me-2"
-              onClick={() => navigate('/home')}
-              style={{ background: 'none', border: 'none', fontSize: '1.5rem', fontWeight: 'bold', cursor: 'pointer' }}
-            >
-              EasyBazaar
-            </button>
-            <span
-              className="badge bg-light text-dark d-flex align-items-center"
-              style={{ cursor: loadingLocation ? 'not-allowed' : 'pointer' }}
-              onClick={loadingLocation ? null : fetchCurrentLocation}
-            >
-              <i className="bi bi-geo-alt me-1"></i>
-              {loadingLocation ? 'Updating...' : currentLocation}
-            </span>
-          </div>
-          <div className="d-flex align-items-center">
-            <input
-              type="text"
-              className="form-control me-2"
-              placeholder="Search products..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              style={{ maxWidth: '300px' }}
-            />
-            <button className="btn btn-outline-primary me-2" onClick={handleSearch}>
-              Search
-            </button>
-            <button className="btn btn-success me-2 d-flex align-items-center" onClick={() => navigate('/order-tracking', { state: { orderId: latestOrderId } })} disabled={!latestOrderId} style={{ whiteSpace: 'nowrap' }}>
-              <i className="bi bi-geo-alt me-2"></i> 
-              Track Order
-            </button>
-            <button className="btn btn-outline-danger" onClick={handleLogout}>
-              Logout
-            </button>
-          </div>
-        </div>
-      </header>
+<header className="bg-white shadow-sm py-3 sticky-top">
+  <div className="container d-flex align-items-center justify-content-between">
+    <div className="d-flex align-items-center">
+      <button
+        className="btn p-0 m-0 text-primary me-2"
+        onClick={() => navigate('/home')}
+        style={{ background: 'none', border: 'none', fontSize: '1.5rem', fontWeight: 'bold', cursor: 'pointer' }}
+      >
+        EasyBazaar
+      </button>
+      <span
+        className="badge bg-light text-dark d-flex align-items-center"
+        style={{ cursor: loadingLocation ? 'not-allowed' : 'pointer' }}
+        onClick={loadingLocation ? null : fetchCurrentLocation}
+      >
+        <i className="bi bi-geo-alt me-1"></i>
+        {loadingLocation ? 'Updating...' : currentLocation}
+      </span>
+    </div>
+    <div className="d-flex align-items-center">
+      <input
+        type="text"
+        className="form-control me-2"
+        placeholder="Search products..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        style={{ maxWidth: '300px' }}
+      />
+      <button className="btn btn-outline-primary me-2" onClick={handleSearch}>
+        Search
+      </button>
+      <button className="btn btn-success me-2 d-flex align-items-center" onClick={() => navigate('/order-tracking', { state: { orderId: latestOrderId } })} disabled={!latestOrderId} style={{ whiteSpace: 'nowrap' }}>
+        <i className="bi bi-geo-alt me-2"></i> 
+        Track Order
+      </button>
+      <button className="btn btn-outline-danger" onClick={handleLogout}>
+        Logout
+      </button>
+      <button
+        className="btn btn-info ms-2"
+        onClick={() => navigate('/cart')}
+        style={{ whiteSpace: 'nowrap' }}
+      >
+        View Cart ({cart.items.length > 0 ? cart.items.length : 0})
+      </button>
+    </div>
+  </div>
+</header>
 
       {/* Hero Banner */}
       <div className="container mt-4">
@@ -317,14 +275,13 @@ function Home() {
                       src={product.imageUrl}
                       alt={product.name}
                       className="w-100 h-100 object-fit-contain p-2"
+                      onClick={() => navigate(`/product/${product.id}`)}
+                      style={{ cursor: 'pointer' }}
                     />
                   </div>
                   <div className="card-body text-center">
                     <h6 className="card-title">{product.name}</h6>
                     <p className="card-text text-success fw-bold">${product.price?.toFixed(2) || 'N/A'}</p>
-                    <button className="btn btn-outline-primary w-100" onClick={() => addToCart(product)}>
-                      Add to Cart
-                    </button>
                   </div>
                 </div>
               </div>
@@ -350,15 +307,14 @@ function Home() {
                       src={product.imageUrl}
                       alt={product.name}
                       className="w-100 h-100 object-fit-contain p-2"
+                      onClick={() => navigate(`/product/${product.id}`)}
+                      style={{ cursor: 'pointer' }}
                     />
                   </div>
                   <div className="card-body text-center">
                     <h5 className="card-title">{product.name}</h5>
                     <p className="card-text">{product.description.substring(0, 50)}...</p>
                     <p className="card-text text-success fw-bold">${product.price.toFixed(2)}</p>
-                    <button className="btn btn-outline-primary w-100" onClick={() => addToCart(product)}>
-                      Add to Cart
-                    </button>
                   </div>
                 </div>
               </div>
@@ -367,53 +323,7 @@ function Home() {
         </div>
       </div>
 
-      {/* Cart Summary and Checkout */}
-      <div className="container mt-5 mb-5">
-        <h4 className="mb-3">Cart ({cart.items.length} items)</h4>
-        {cart.items.length > 0 ? (
-          <div>
-            <div className="table-responsive">
-              <table className="table table-striped">
-                <thead>
-                  <tr>
-                    <th>Product Name</th>
-                    <th>Quantity</th>
-                    <th>Price</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {cart.items.map((item, index) => (
-                    <tr key={index}>
-                      <td>{getProductName(item.productId)}</td>
-                      <td>{item.quantity}</td>
-                      <td>${item.price.toFixed(2)}</td>
-                      <td>
-                        <button
-                          className="btn btn-danger btn-sm"
-                          onClick={() => removeFromCart(item.productId)}
-                        >
-                          🗑️
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                  <tr>
-                    <td colSpan="4"><strong>Total</strong></td>
-                    <td><strong>${cart.items.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2)}</strong></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <button className="btn btn-success w-100 mt-3" onClick={placeOrderHandler}>
-              Checkout
-            </button>
-          </div>
-        ) : (
-          <p className="text-center text-muted">Cart is empty.</p>
-        )}
-        {error && <div className="alert alert-danger mt-3">{error}</div>}
-      </div>
+      {error && <div className="alert alert-danger mt-3">{error}</div>}
     </div>
   );
 }
