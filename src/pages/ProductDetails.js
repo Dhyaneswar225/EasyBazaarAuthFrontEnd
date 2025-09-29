@@ -6,10 +6,12 @@ function ProductDetails() {
   const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [error, setError] = useState('');
+  const [isInCart, setIsInCart] = useState(false); // Track if product is in cart
   const userId = "guest"; // Static userId
 
   useEffect(() => {
     fetchProduct();
+    fetchCart(); // Check if product is in cart
   }, [id]);
 
   const fetchProduct = async () => {
@@ -20,6 +22,19 @@ function ProductDetails() {
       setProduct(data);
     } catch (err) {
       setError('Failed to load product');
+    }
+  };
+
+  const fetchCart = async () => {
+    try {
+      const response = await fetch(`http://localhost:8080/api/cart/${userId}`);
+      if (response.ok) {
+        const cartData = await response.json();
+        const isProductInCart = cartData.items.some(item => item.productId === id);
+        setIsInCart(isProductInCart);
+      }
+    } catch (err) {
+      console.error('Failed to fetch cart:', err);
     }
   };
 
@@ -38,6 +53,7 @@ function ProductDetails() {
       });
       if (response.ok) {
         alert('Added to cart!');
+        setIsInCart(true); // Update state to reflect item is in cart
         navigate('/cart'); // Redirect to /cart after adding to cart
       } else {
         throw new Error('Failed to add to cart');
@@ -69,6 +85,10 @@ function ProductDetails() {
     } catch (err) {
       setError('Failed to process buy now');
     }
+  };
+
+  const viewCart = () => {
+    navigate('/cart');
   };
 
   if (error) return <div className="alert alert-danger">{error}</div>;
@@ -103,12 +123,20 @@ function ProductDetails() {
             <h2>{product.name}</h2>
             <p>{product.description}</p>
             <p className="text-success fw-bold">${product.price.toFixed(2)}</p>
-            <button className="btn btn-outline-primary w-100 mb-2" onClick={addToCart}>
-              Add to Cart
-            </button>
-            <button className="btn btn-success w-100" onClick={buyNow}>
-              Buy Now
-            </button>
+            {!isInCart ? (
+              <>
+                <button className="btn btn-outline-primary w-100 mb-2" onClick={addToCart}>
+                  Add to Cart
+                </button>
+                <button className="btn btn-success w-100" onClick={buyNow}>
+                  Buy Now
+                </button>
+              </>
+            ) : (
+              <button className="btn btn-info w-100" onClick={viewCart}>
+                View Cart
+              </button>
+            )}
           </div>
         </div>
       </div>

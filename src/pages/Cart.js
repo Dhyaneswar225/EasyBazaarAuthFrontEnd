@@ -4,10 +4,10 @@ import { useNavigate } from 'react-router-dom';
 function Cart() {
   const navigate = useNavigate();
   const [cart, setCart] = useState({ items: [] });
-  const [products, setProducts] = useState([]); // State to hold product details
+  const [products, setProducts] = useState([]);
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(true); // Add loading state
-  const userId = "guest"; // Static userId
+  const [loading, setLoading] = useState(true);
+  const userId = "guest";
 
   useEffect(() => {
     fetchCartAndProducts();
@@ -22,18 +22,44 @@ function Cart() {
       const cartData = await cartResponse.json();
       setCart(cartData || { items: [] });
 
-      // Fetch all products to map productIds to names
+      // Fetch products
       const productsResponse = await fetch(`http://localhost:8080/api/products`);
       if (!productsResponse.ok) throw new Error('Failed to fetch products');
       const productsData = await productsResponse.json();
       setProducts(productsData || []);
-
     } catch (err) {
       setError('Failed to load data: ' + err.message);
       setCart({ items: [] });
       setProducts([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const updateQuantity = async (productId, change) => {
+    try {
+      const itemToUpdate = cart.items.find(item => item.productId === productId);
+      if (!itemToUpdate) return;
+
+      const newQuantity = Math.max(1, itemToUpdate.quantity + change);
+      const response = await fetch(`http://localhost:8080/api/cart/update`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          productId,
+          quantity: newQuantity,
+          price: itemToUpdate.price
+        }),
+      });
+      if (response.ok) {
+        fetchCartAndProducts();
+      } else {
+        throw new Error(`Failed to update quantity: ${await response.text()}`);
+      }
+    } catch (err) {
+      setError('Failed to update quantity: ' + err.message);
+      console.error(err);
     }
   };
 
@@ -48,10 +74,10 @@ function Cart() {
         fetchCartAndProducts();
         alert('Item removed from cart!');
       } else {
-        throw new Error(`Failed to remove item from cart: ${response.statusText}`);
+        throw new Error(`Failed to remove item from cart: ${await response.text()}`);
       }
     } catch (err) {
-      setError('Failed to remove item from cart');
+      setError('Failed to remove item from cart: ' + err.message);
       console.error(err);
     }
   };
@@ -65,13 +91,19 @@ function Cart() {
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f8f9fa' }}>
-      {/* Header with EasyBazaar icon */}
+      {/* Header */}
       <header className="bg-white shadow-sm py-3 sticky-top">
         <div className="container d-flex align-items-center justify-content-start">
           <button
             className="btn p-0 m-0 text-primary me-2"
             onClick={() => navigate('/home')}
-            style={{ background: 'none', border: 'none', fontSize: '1.5rem', fontWeight: 'bold', cursor: 'pointer' }}
+            style={{
+              background: 'none',
+              border: 'none',
+              fontSize: '1.5rem',
+              fontWeight: 'bold',
+              cursor: 'pointer'
+            }}
           >
             EasyBazaar
           </button>
@@ -99,8 +131,24 @@ function Cart() {
                   {cart.items.map((item, index) => (
                     <tr key={index}>
                       <td>{getProductName(item.productId)}</td>
-                      <td>{item.quantity}</td>
-                      <td>${item.price.toFixed(2)}</td>
+                      <td>
+                        <div className="d-flex align-items-center">
+                          <button
+                            className="btn btn-sm btn-outline-secondary me-2"
+                            onClick={() => updateQuantity(item.productId, -1)}
+                          >
+                            -
+                          </button>
+                          <span>{item.quantity}</span>
+                          <button
+                            className="btn btn-sm btn-outline-secondary ms-2"
+                            onClick={() => updateQuantity(item.productId, 1)}
+                          >
+                            +
+                          </button>
+                        </div>
+                      </td>
+                      <td>${(item.price * item.quantity).toFixed(2)}</td>
                       <td>
                         <button
                           className="btn btn-danger btn-sm"
@@ -111,9 +159,13 @@ function Cart() {
                       </td>
                     </tr>
                   ))}
-                  <tr>
-                    <td colSpan="4"><strong>Total</strong></td>
-                    <td><strong>${cart.items.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2)}</strong></td>
+                  <tr className="table-light">
+                    <td colSpan="2"><strong>Total</strong></td>
+                    <td colSpan="2">
+                      <strong>
+                        ${cart.items.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2)}
+                      </strong>
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -129,7 +181,10 @@ function Cart() {
         ) : (
           <p className="text-center text-muted">Your cart is empty.</p>
         )}
-        <button className="btn btn-secondary mt-3" onClick={() => navigate('/home')}>
+        <button
+          className="btn btn-secondary mt-3"
+          onClick={() => navigate('/home')}
+        >
           Back to Shopping
         </button>
       </div>

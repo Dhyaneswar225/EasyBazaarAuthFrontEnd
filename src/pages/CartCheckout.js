@@ -5,9 +5,9 @@ function CartCheckout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [cart, setCart] = useState({ items: [] });
-  const [products, setProducts] = useState([]); // State to hold product details
+  const [products, setProducts] = useState([]);
   const [error, setError] = useState('');
-  const userId = "guest"; // Static userId
+  const userId = "guest";
   const address = "123 Street"; // Mock address, replace with user input later
 
   useEffect(() => {
@@ -68,13 +68,19 @@ function CartCheckout() {
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f8f9fa' }}>
-      {/* Header with EasyBazaar icon */}
+      {/* Header */}
       <header className="bg-white shadow-sm py-3 sticky-top">
         <div className="container d-flex align-items-center justify-content-start">
           <button
             className="btn p-0 m-0 text-primary me-2"
             onClick={() => navigate('/home')}
-            style={{ background: 'none', border: 'none', fontSize: '1.5rem', fontWeight: 'bold', cursor: 'pointer' }}
+            style={{
+              background: 'none',
+              border: 'none',
+              fontSize: '1.5rem',
+              fontWeight: 'bold',
+              cursor: 'pointer'
+            }}
           >
             EasyBazaar
           </button>
@@ -91,21 +97,25 @@ function CartCheckout() {
                 <thead>
                   <tr>
                     <th>Product Name</th>
-                    <th>Quantity</th>
-                    <th>Price</th>
+                    <th className="text-center">Quantity</th>
+                    <th className="text-end">Price</th>
                   </tr>
                 </thead>
                 <tbody>
                   {cart.items.map((item, index) => (
                     <tr key={index}>
                       <td>{getProductName(item.productId)}</td>
-                      <td>{item.quantity}</td>
-                      <td>${(item.price * item.quantity).toFixed(2)}</td>
+                      <td className="text-center">{item.quantity}</td>
+                      <td className="text-end">${(item.price * item.quantity).toFixed(2)}</td>
                     </tr>
                   ))}
-                  <tr>
-                    <td colSpan="3"><strong>Total</strong></td>
-                    <td><strong>${cart.items.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2)}</strong></td>
+                  <tr className="table-light">
+                    <td colSpan="2"><strong>Total</strong></td>
+                    <td className="text-end">
+                      <strong>
+                        ${cart.items.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2)}
+                      </strong>
+                    </td>
                   </tr>
                 </tbody>
               </table>
