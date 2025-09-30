@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getProducts, searchProducts, getCategories, getFeaturedProducts, getCart, getOrders } from '../services/api';
-import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 
 function Home() {
   const navigate = useNavigate();
@@ -17,9 +17,12 @@ function Home() {
   const [currentLocation, setCurrentLocation] = useState('Mumbai 400001'); // Default
   const [loadingLocation, setLoadingLocation] = useState(false);
   const userId = "guest"; // Static userId
+  const [userEmail, setUserEmail] = useState(''); // Store logged-in email
 
   useEffect(() => {
     fetchInitialData();
+    const savedEmail = localStorage.getItem('userEmail');
+    if (savedEmail) setUserEmail(savedEmail);
   }, [location]);
 
   const fetchInitialData = async () => {
@@ -82,9 +85,12 @@ function Home() {
           new Date(latest.timestamp) > new Date(current.timestamp) ? latest : current
         );
         setLatestOrderId(latestOrder.id);
+      } else {
+        setLatestOrderId(null); // Explicitly set to null if no orders
       }
     } catch (err) {
       console.error('Failed to fetch orders:', err);
+      setLatestOrderId(null); // Handle error by setting to null
     }
   };
 
@@ -99,6 +105,9 @@ function Home() {
   };
 
   const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userEmail');
+    setUserEmail('');
     navigate('/login');
   };
 
@@ -179,54 +188,67 @@ function Home() {
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f8f9fa' }}>
       {/* Header */}
-<header className="bg-white shadow-sm py-3 sticky-top">
-  <div className="container d-flex align-items-center justify-content-between">
-    <div className="d-flex align-items-center">
-      <button
-        className="btn p-0 m-0 text-primary me-2"
-        onClick={() => navigate('/home')}
-        style={{ background: 'none', border: 'none', fontSize: '1.5rem', fontWeight: 'bold', cursor: 'pointer' }}
-      >
-        EasyBazaar
-      </button>
-      <span
-        className="badge bg-light text-dark d-flex align-items-center"
-        style={{ cursor: loadingLocation ? 'not-allowed' : 'pointer' }}
-        onClick={loadingLocation ? null : fetchCurrentLocation}
-      >
-        <i className="bi bi-geo-alt me-1"></i>
-        {loadingLocation ? 'Updating...' : currentLocation}
-      </span>
-    </div>
-    <div className="d-flex align-items-center">
-      <input
-        type="text"
-        className="form-control me-2"
-        placeholder="Search products..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        style={{ maxWidth: '300px' }}
-      />
-      <button className="btn btn-outline-primary me-2" onClick={handleSearch}>
-        Search
-      </button>
-      <button className="btn btn-success me-2 d-flex align-items-center" onClick={() => navigate('/order-tracking', { state: { orderId: latestOrderId } })} disabled={!latestOrderId} style={{ whiteSpace: 'nowrap' }}>
-        <i className="bi bi-geo-alt me-2"></i> 
-        Track Order
-      </button>
-      <button className="btn btn-outline-danger" onClick={handleLogout}>
-        Logout
-      </button>
-      <button
-        className="btn btn-info ms-2"
-        onClick={() => navigate('/cart')}
-        style={{ whiteSpace: 'nowrap' }}
-      >
-        View Cart ({cart.items.length > 0 ? cart.items.length : 0})
-      </button>
-    </div>
-  </div>
-</header>
+      <header className="bg-white shadow-sm py-3 sticky-top">
+        <div className="container d-flex align-items-center justify-content-between">
+          <div className="d-flex align-items-center">
+            <button
+              className="btn p-0 m-0 text-primary me-2"
+              onClick={() => navigate('/home')}
+              style={{ background: 'none', border: 'none', fontSize: '1.5rem', fontWeight: 'bold', cursor: 'pointer' }}
+            >
+              EasyBazaar
+            </button>
+            <span
+              className="badge bg-light text-dark d-flex align-items-center"
+              style={{ cursor: loadingLocation ? 'not-allowed' : 'pointer' }}
+              onClick={loadingLocation ? null : fetchCurrentLocation}
+            >
+              <i className="bi bi-geo-alt me-1"></i>
+              {loadingLocation ? 'Updating...' : currentLocation}
+            </span>
+          </div>
+          <div className="d-flex align-items-center">
+            <input
+              type="text"
+              className="form-control me-2"
+              placeholder="Search products..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{ maxWidth: '300px' }}
+            />
+            <button className="btn btn-outline-primary me-2" onClick={handleSearch}>
+              Search
+            </button>
+            <button
+              className="btn btn-info"
+              onClick={() => navigate('/cart')}
+              style={{ whiteSpace: 'nowrap' }}
+            >
+              View Cart ({cart.items.length > 0 ? cart.items.length : 0})
+            </button>
+            {/* My Profile Dropdown */}
+            <div className="dropdown me-2">
+              <button
+                className="btn btn-outline-secondary dropdown-toggle"
+                type="button"
+                id="profileDropdown"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+                style={{ whiteSpace: 'nowrap' }}
+              >
+                My Profile {userEmail ? `(${userEmail})` : ''}
+              </button>
+              <ul className="dropdown-menu" aria-labelledby="profileDropdown">
+                <li><a className="dropdown-item" href="#profile" onClick={() => alert('Profile page not implemented yet')}>Profile</a></li>
+                <li><a className="dropdown-item" href="/my-orders" onClick={() => navigate('/my-orders')}>My Orders</a></li>
+                <li><a className="dropdown-item" href="/cart" onClick={() => navigate('/cart')}>View cart</a></li>
+                <li><hr className="dropdown-divider" /></li>
+                <li><a className="dropdown-item text-danger" href="#logout" onClick={handleLogout}>Logout</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </header>
 
       {/* Hero Banner */}
       <div className="container mt-4">

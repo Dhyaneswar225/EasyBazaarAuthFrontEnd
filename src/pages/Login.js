@@ -16,6 +16,7 @@ function Login() {
     try {
       const response = await login(formData);
       localStorage.setItem('token', response.data);
+      localStorage.setItem('userEmail', formData.email); // Store email
       alert('Login successful!');
       navigate('/home');
     } catch (err) {

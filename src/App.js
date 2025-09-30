@@ -8,6 +8,7 @@ import ResetPassword from './pages/ResetPassword';
 import ProductDetails from './pages/ProductDetails';
 import CartCheckout from './pages/CartCheckout';
 import Cart from './pages/Cart'; 
+import MyOrders from './pages/MyOrders';
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
         <Route path="/product/:id" element={<ProductDetails />} />
         <Route path="/cart-checkout" element={<CartCheckout />} />
         <Route path="/cart" element={<Cart />} /> 
+        <Route path="/my-orders" element={<MyOrders />} />
       </Routes>
     </BrowserRouter>
   );
