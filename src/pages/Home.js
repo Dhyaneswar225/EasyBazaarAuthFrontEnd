@@ -134,7 +134,14 @@ function Home() {
       console.error(err);
     }
   };
-
+// In handleLogin function of Home.js
+const handleLogin = async (user) => {
+  const response = await login(user);
+  localStorage.setItem('userEmail', response.data.email);
+  // Optionally clear old name data if needed, or rely on the new key
+  setUserEmail(response.data.email);
+  navigate('/home');
+};
   const getProductName = (productId) => {
     const product = [...products, ...featuredProducts].find(p => p.id === productId);
     return product ? product.name : 'Unknown';
@@ -239,7 +246,7 @@ function Home() {
                 My Profile {userEmail ? `(${userEmail})` : ''}
               </button>
               <ul className="dropdown-menu" aria-labelledby="profileDropdown">
-                <li><a className="dropdown-item" href="#profile" onClick={() => alert('Profile page not implemented yet')}>Profile</a></li>
+                <li><a className="dropdown-item" href="/profile" onClick={() => navigate('/profile')}>Profile</a></li>
                 <li><a className="dropdown-item" href="/my-orders" onClick={() => navigate('/my-orders')}>My Orders</a></li>
                 <li><a className="dropdown-item" href="/cart" onClick={() => navigate('/cart')}>View cart</a></li>
                 <li><hr className="dropdown-divider" /></li>
