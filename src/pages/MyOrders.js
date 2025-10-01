@@ -24,21 +24,14 @@ function MyOrders() {
           return map;
         }, {});
         setProducts(productMap);
-        console.log('Product map:', productMap); // Debug log
 
-        // Fetch orders for the dynamic userId
-        console.log('Fetching orders for userId:', userId);
         const response = await getOrders(userId);
-        console.log('Full response:', response);
         if (!response.data) {
-          console.log('No data in response, setting orders to empty array');
           setOrders([]);
         } else {
-          console.log('Orders data:', response.data);
           setOrders(response.data);
         }
       } catch (err) {
-        console.error('Fetch error:', err.response ? err.response : err);
         setError(`Failed to load data: ${err.message || 'Unknown error'}`);
       } finally {
         setLoading(false);
@@ -49,7 +42,6 @@ function MyOrders() {
 
   const getLatestTimestamp = (trackingUpdates) => {
     if (!trackingUpdates || trackingUpdates.length === 0) {
-      console.log('No tracking updates found');
       return null;
     }
     const latestUpdate = trackingUpdates.reduce((latest, update) => {
@@ -57,7 +49,6 @@ function MyOrders() {
       const latestDate = new Date(latest.timestamp.replace('IST', '+0530'));
       return currentDate > latestDate ? update : latest;
     });
-    console.log('Latest timestamp:', latestUpdate.timestamp);
     return latestUpdate.timestamp;
   };
 
@@ -65,7 +56,6 @@ function MyOrders() {
     if (!timestamp) return 'N/A';
     const normalizedTimestamp = timestamp.replace('IST', '+0530');
     const date = new Date(normalizedTimestamp);
-    console.log('Parsed date:', date);
     return isNaN(date.getTime()) ? 'N/A' : date.toLocaleDateString();
   };
 
