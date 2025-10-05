@@ -112,17 +112,42 @@ function ProductDetails() {
       {/* Product Details Content */}
       <div className="container mt-5">
         <div className="row">
+          {/* Left Column: Image and Specifications */}
           <div className="col-md-6">
             <img
-              src={product.imageUrl}
+              src={product.imageUrl || 'https://via.placeholder.com/300'}
               alt={product.name}
-              className="img-fluid"
+              className="img-fluid mb-4"
+              onError={(e) => { e.target.src = 'https://via.placeholder.com/300'; }}
             />
+            <h4>Specifications</h4>
+            <ul className="list-group">
+              {Object.entries(product.specifications || {}).map(([key, value]) => (
+                <li key={key} className="list-group-item">
+                  <strong>{key}:</strong> {value}
+                </li>
+              ))}
+            </ul>
           </div>
+
+          {/* Right Column: Description, Features, and Buttons */}
           <div className="col-md-6">
             <h2>{product.name}</h2>
             <p>{product.description}</p>
             <p className="text-success fw-bold">${product.price.toFixed(2)}</p>
+
+            {/* Features List */}
+            <h4>About this Item</h4>
+            <ul className="list-group">
+              {product.features && product.features.length > 0 ? (
+                product.features.map((feature, index) => (
+                  <li key={index} className="list-group-item">{feature}</li>
+                ))
+              ) : (
+                <li className="list-group-item">No features available.</li>
+              )}
+            </ul>
+
             {!isInCart ? (
               <>
                 <button className="btn btn-outline-primary w-100 mb-2" onClick={addToCart}>
