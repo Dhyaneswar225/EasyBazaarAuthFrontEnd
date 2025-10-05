@@ -135,19 +135,6 @@ function ProductDetails() {
             <h2>{product.name}</h2>
             <p>{product.description}</p>
             <p className="text-success fw-bold">${product.price.toFixed(2)}</p>
-
-            {/* Features List */}
-            <h4>About this Item</h4>
-            <ul className="list-group">
-              {product.features && product.features.length > 0 ? (
-                product.features.map((feature, index) => (
-                  <li key={index} className="list-group-item">{feature}</li>
-                ))
-              ) : (
-                <li className="list-group-item">No features available.</li>
-              )}
-            </ul>
-
             {!isInCart ? (
               <>
                 <button className="btn btn-outline-primary w-100 mb-2" onClick={addToCart}>
@@ -162,6 +149,17 @@ function ProductDetails() {
                 View Cart
               </button>
             )}
+            {/* Features List */}
+            <h4>About this Item</h4>
+            <ul className="list-group">
+              {product.features && product.features.length > 0 ? (
+                product.features.map((feature, index) => (
+                  <li key={index} className="list-group-item">{feature}</li>
+                ))
+              ) : (
+                <li className="list-group-item">No features available.</li>
+              )}
+            </ul>
           </div>
         </div>
       </div>
