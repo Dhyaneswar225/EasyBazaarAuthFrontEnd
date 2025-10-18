@@ -6,6 +6,7 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 function Home() {
   const navigate = useNavigate();
   const location = useLocation();
+
   const [products, setProducts] = useState([]);
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -16,8 +17,10 @@ function Home() {
   const [latestOrderId, setLatestOrderId] = useState(null);
   const [currentLocation, setCurrentLocation] = useState('Mumbai 400001'); // Default
   const [loadingLocation, setLoadingLocation] = useState(false);
+  const [userEmail, setUserEmail] = useState('');
+  const [priceRange, setPriceRange] = useState([0, 10000]);
+
   const userId = "guest"; // Static userId
-  const [userEmail, setUserEmail] = useState(''); // Store logged-in email
 
   useEffect(() => {
     fetchInitialData();
@@ -44,12 +47,8 @@ function Home() {
 
   const fetchProducts = async (name = '', categoryId = '') => {
     try {
-      const response = name
-        ? await searchProducts(name)
-        : await getProducts();
-      const filteredProducts = categoryId
-        ? response.data.filter(p => p.categoryId === categoryId)
-        : response.data;
+      const response = name ? await searchProducts(name) : await getProducts();
+      const filteredProducts = categoryId ? response.data.filter(p => p.categoryId === categoryId) : response.data;
       setProducts(filteredProducts);
     } catch (err) {
       setError('Failed to load products');
@@ -68,9 +67,7 @@ function Home() {
   const fetchCart = async () => {
     try {
       const response = await getCart(userId);
-      const updatedCart = response.data || { items: [] };
-      setCart(updatedCart);
-      console.log('Cart updated:', updatedCart.items);
+      setCart(response.data || { items: [] });
     } catch (err) {
       setError('Failed to load cart');
       setCart({ items: [] });
@@ -86,11 +83,11 @@ function Home() {
         );
         setLatestOrderId(latestOrder.id);
       } else {
-        setLatestOrderId(null); // Explicitly set to null if no orders
+        setLatestOrderId(null);
       }
     } catch (err) {
       console.error('Failed to fetch orders:', err);
-      setLatestOrderId(null); // Handle error by setting to null
+      setLatestOrderId(null);
     }
   };
 
@@ -134,18 +131,6 @@ function Home() {
       console.error(err);
     }
   };
-// In handleLogin function of Home.js
-const handleLogin = async (user) => {
-  const response = await login(user);
-  localStorage.setItem('userEmail', response.data.email);
-  // Optionally clear old name data if needed, or rely on the new key
-  setUserEmail(response.data.email);
-  navigate('/home');
-};
-  const getProductName = (productId) => {
-    const product = [...products, ...featuredProducts].find(p => p.id === productId);
-    return product ? product.name : 'Unknown';
-  };
 
   const fetchCurrentLocation = () => {
     setLoadingLocation(true);
@@ -187,9 +172,7 @@ const handleLogin = async (user) => {
 
   useEffect(() => {
     const savedLocation = localStorage.getItem('currentLocation');
-    if (savedLocation) {
-      setCurrentLocation(savedLocation);
-    }
+    if (savedLocation) setCurrentLocation(savedLocation);
   }, []);
 
   return (
@@ -233,7 +216,7 @@ const handleLogin = async (user) => {
             >
               View Cart ({cart.items.length > 0 ? cart.items.length : 0})
             </button>
-            {/* My Profile Dropdown */}
+            {/* Profile Dropdown */}
             <div className="dropdown me-2">
               <button
                 className="btn btn-outline-secondary dropdown-toggle"
@@ -246,11 +229,11 @@ const handleLogin = async (user) => {
                 My Profile {userEmail ? `(${userEmail})` : ''}
               </button>
               <ul className="dropdown-menu" aria-labelledby="profileDropdown">
-                <li><a className="dropdown-item" href="/profile" onClick={() => navigate('/profile')}>Profile</a></li>
-                <li><a className="dropdown-item" href="/my-orders" onClick={() => navigate('/my-orders')}>My Orders</a></li>
-                <li><a className="dropdown-item" href="/cart" onClick={() => navigate('/cart')}>View cart</a></li>
+                <li><a className="dropdown-item" onClick={() => navigate('/profile')}>Profile</a></li>
+                <li><a className="dropdown-item" onClick={() => navigate('/my-orders')}>My Orders</a></li>
+                <li><a className="dropdown-item" onClick={() => navigate('/cart')}>View cart</a></li>
                 <li><hr className="dropdown-divider" /></li>
-                <li><a className="dropdown-item text-danger" href="#logout" onClick={handleLogout}>Logout</a></li>
+                <li><a className="dropdown-item text-danger" onClick={handleLogout}>Logout</a></li>
               </ul>
             </div>
           </div>
@@ -283,7 +266,6 @@ const handleLogin = async (user) => {
               key={category.id}
               className={`btn btn-outline-primary ${selectedCategory === category.id ? 'active' : ''} mb-2`}
               onClick={() => handleCategoryChange({ target: { value: category.id } })}
-              style={{ whiteSpace: 'nowrap' }}
             >
               {category.name}
             </button>
@@ -291,13 +273,32 @@ const handleLogin = async (user) => {
         </div>
       </div>
 
-      {/* Featured Products */}
+      {/* Featured Products with Price Filter */}
       <div className="container mt-5">
-        <h4 className="mb-3">Featured Deals</h4>
+        <div className="d-flex justify-content-between align-items-center mb-2">
+          <h4 className="mb-0">Featured Deals</h4>
+          <div className="d-flex flex-column align-items-end">
+            <h6 className="mb-1">Filter the Products by Price</h6>
+            <div className="d-flex align-items-center gap-2">
+              <span>${priceRange[0]}</span>
+              <input
+                type="range"
+                className="form-range"
+                min="0"
+                max="10000"
+                value={priceRange[1]}
+                onChange={(e) => setPriceRange([0, Number(e.target.value)])}
+                style={{ width: '200px' }}
+              />
+              <span>${priceRange[1]}</span>
+            </div>
+          </div>
+        </div>
+
         <div className="row row-cols-1 row-cols-md-3 g-4">
-          {featuredProducts.length > 0 ? (
-            featuredProducts.map((product, index) => (
-              <div key={index} className="col">
+          {featuredProducts.filter(p => p.price >= priceRange[0] && p.price <= priceRange[1]).length > 0 ? (
+            featuredProducts.filter(p => p.price >= priceRange[0] && p.price <= priceRange[1]).map(product => (
+              <div key={product.id} className="col">
                 <div className="card h-100 border-0 shadow-sm">
                   <div className="card-img-top overflow-hidden" style={{ height: '200px' }}>
                     <img
@@ -342,8 +343,8 @@ const handleLogin = async (user) => {
                   </div>
                   <div className="card-body text-center">
                     <h5 className="card-title">{product.name}</h5>
-                    <p className="card-text">{product.description.substring(0, 50)}...</p>
-                    <p className="card-text text-success fw-bold">${product.price.toFixed(2)}</p>
+                    <p className="card-text">{product.description?.substring(0, 50)}...</p>
+                    <p className="card-text text-success fw-bold">${product.price?.toFixed(2)}</p>
                   </div>
                 </div>
               </div>
